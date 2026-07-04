@@ -1,0 +1,35 @@
+[project]
+name = "sephela-static-engine"
+version = "0.1.0"
+description = "Sephela Static Analysis Engine — modular APK extractors → Evidence Envelope"
+requires-python = ">=3.12"
+dependencies = [
+    "pydantic>=2.7",
+]
+
+[project.optional-dependencies]
+# Heavy analysis tooling — optional so the engine imports and its tool-free
+# extractors run anywhere. Install in the engine's Docker image for full analysis.
+tools = [
+    "androguard>=4.1",
+    "apkid>=2.1",
+]
+dev = [
+    "pytest>=8.2",
+    "ruff>=0.4",
+    "mypy>=1.10",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["sephela_static*"]
