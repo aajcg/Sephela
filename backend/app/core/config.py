@@ -53,6 +53,20 @@ class Settings(BaseSettings):
     redis_port: int = 6379
     redis_db: int = 0
 
+    # ---- Storage ----
+    storage_backend: Literal["local", "s3"] = "local"
+    storage_local_root: str = "./data/storage"
+    # S3 settings (used when storage_backend=s3; wired fully in a later phase)
+    s3_endpoint_url: str | None = None
+    s3_bucket: str = "sephela-samples"
+    s3_access_key: str | None = None
+    s3_secret_key: str | None = None
+    s3_region: str = "us-east-1"
+
+    # ---- Upload / pipeline ----
+    max_upload_bytes: int = 300 * 1024 * 1024  # 300 MiB
+    pipeline_version: str = "2026.1"
+
     @computed_field  # type: ignore[prop-decorator]
     @property
     def is_prod(self) -> bool:
