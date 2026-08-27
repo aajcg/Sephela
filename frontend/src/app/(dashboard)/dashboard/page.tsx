@@ -19,7 +19,7 @@ function StatCard({
 }: { 
   label: string; 
   value: number | string; 
-  icon: any; 
+  icon: React.ElementType; 
   colorClass: string;
   delay?: number;
 }) {
