@@ -8,14 +8,19 @@ const FINISHED = ['completed', 'partial'];
 
 export default function ReportsPage() {
   return (
-    <div>
-      <PageHeader title="Reports" description="Finished analyses with generated reports." />
-      <JobList
-        status={FINISHED}
-        hrefBase="/reports"
-        emptyTitle="No reports yet"
-        emptyDescription="Reports appear here once an analysis finishes."
+    <div className="max-w-5xl mx-auto">
+      <PageHeader 
+        title="Analysis Reports" 
+        description="Completed analyses with generated SOC-ready reports." 
       />
+      <div className="mt-6">
+        <JobList
+          status={FINISHED}
+          hrefBase="/reports"
+          emptyTitle="No reports yet"
+          emptyDescription="Reports appear here once an analysis finishes."
+        />
+      </div>
     </div>
   );
 }

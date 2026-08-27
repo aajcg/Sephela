@@ -1,9 +1,10 @@
 'use client';
 
+import { CheckCircle2, Circle, Loader2, PlayCircle, XCircle, SkipForward } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatusBadge } from '@/components/ui/badge';
 import type { StageDetail, StageInfo } from '@/lib/api/types';
-import { formatDate } from '@/lib/utils';
+import { formatDate, cn } from '@/lib/utils';
 
 // The pipeline's dependency order (app/tasks/pipeline.py). Stages are displayed
 // in this order rather than by creation time so a stage that has not started yet
@@ -19,13 +20,13 @@ const STAGE_ORDER = [
 ] as const;
 
 const STAGE_LABELS: Record<string, string> = {
-  static: 'Static analysis',
-  code_intel: 'Code intelligence',
-  dynamic: 'Dynamic analysis',
-  threat_intel: 'Threat intelligence',
-  ai_orchestrator: 'Multi-agent reasoning',
-  scoring: 'Risk scoring',
-  reporting: 'Report generation',
+  static: 'Static Analysis',
+  code_intel: 'Code Intelligence',
+  dynamic: 'Dynamic Analysis',
+  threat_intel: 'Threat Intelligence',
+  ai_orchestrator: 'Multi-Agent Reasoning',
+  scoring: 'Risk Scoring',
+  reporting: 'Report Generation',
 };
 
 function label(engine: string): string {
@@ -46,6 +47,25 @@ function duration(stage: StageInfo): string | null {
   return `${Math.floor(ms / 60_000)}m ${Math.round((ms % 60_000) / 1000)}s`;
 }
 
+function StatusIcon({ status, className }: { status: string; className?: string }) {
+  if (status === 'completed' || status === 'ok') {
+    return <CheckCircle2 className={cn("text-severity-low drop-shadow-[0_0_8px_hsl(160_84%_39%_/_0.6)]", className)} />;
+  }
+  if (status === 'running') {
+    return <Loader2 className={cn("text-accent-cyan animate-spin drop-shadow-[0_0_8px_hsl(187_92%_57%_/_0.6)]", className)} />;
+  }
+  if (status === 'failed') {
+    return <XCircle className={cn("text-severity-critical drop-shadow-[0_0_8px_hsl(347_77%_50%_/_0.6)]", className)} />;
+  }
+  if (status === 'partial') {
+    return <PlayCircle className={cn("text-severity-medium drop-shadow-[0_0_8px_hsl(38_92%_50%_/_0.6)]", className)} />;
+  }
+  if (status === 'skipped') {
+    return <SkipForward className={cn("text-muted-foreground", className)} />;
+  }
+  return <Circle className={cn("text-muted-foreground/50", className)} />;
+}
+
 /**
  * Per-stage progress with the reason each stage produced what it did.
  *
@@ -63,53 +83,84 @@ export function StageList({ stages, fallback }: { stages?: StageDetail[]; fallba
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Pipeline stages</CardTitle>
+        <CardTitle>Pipeline Stages</CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-col gap-2">
+      <CardContent className="pt-2">
         {sorted.length === 0 && (
-          <p className="text-sm text-muted-foreground">Waiting for the pipeline to start…</p>
+          <p className="text-sm text-muted-foreground pb-4">Waiting for the pipeline to start…</p>
         )}
-        {sorted.map((stage) => {
-          const detail = stage as StageDetail;
-          const elapsed = duration(stage);
-          return (
-            <div key={stage.engine} className="rounded-md border px-3 py-2">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="text-sm font-medium">{label(stage.engine)}</span>
-                <div className="flex items-center gap-3">
-                  {elapsed && (
-                    <span className="text-xs tabular-nums text-muted-foreground">{elapsed}</span>
+        
+        <div className="relative border-l border-border/60 ml-3 md:ml-4 space-y-6 pb-2">
+          {sorted.map((stage, index) => {
+            const detail = stage as StageDetail;
+            const elapsed = duration(stage);
+            const isLast = index === sorted.length - 1;
+            const isRunning = stage.status === 'running';
+            
+            return (
+              <div 
+                key={stage.engine} 
+                className="relative pl-6 md:pl-8 animate-fade-in group"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                {/* Connecting line glow for active stage */}
+                {isRunning && !isLast && (
+                  <div className="absolute left-[-1px] top-6 bottom-[-24px] w-[2px] bg-gradient-to-b from-accent-cyan to-transparent animate-pulse" />
+                )}
+                
+                {/* Node icon */}
+                <div className="absolute left-[-12px] top-0.5 bg-card rounded-full p-0.5">
+                  <StatusIcon status={stage.status} className="h-5 w-5" />
+                </div>
+
+                <div className={cn(
+                  "rounded-lg border bg-muted/10 px-4 py-3 transition-colors",
+                  isRunning ? "border-accent-cyan/30 shadow-[0_0_15px_hsl(187_92%_57%_/_0.1)] bg-accent-cyan/5" : "border-border/60 hover:bg-muted/20"
+                )}>
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <span className={cn(
+                      "text-sm font-semibold tracking-tight",
+                      isRunning ? "text-accent-cyan" : "text-foreground"
+                    )}>
+                      {label(stage.engine)}
+                    </span>
+                    <div className="flex items-center gap-3">
+                      {elapsed && (
+                        <span className="text-xs font-mono-data text-muted-foreground">{elapsed}</span>
+                      )}
+                      {detail.attempt > 1 && (
+                        <span className="text-xs text-muted-foreground/70 bg-muted px-2 py-0.5 rounded">attempt {detail.attempt}</span>
+                      )}
+                      <StatusBadge status={stage.status} />
+                    </div>
+                  </div>
+
+                  {detail.error && (
+                    <p
+                      className={cn(
+                        "mt-2 text-sm leading-relaxed p-2.5 rounded-md border",
+                        stage.status === 'failed'
+                          ? "bg-destructive/10 border-destructive/20 text-destructive-foreground"
+                          : "bg-muted/30 border-border/50 text-muted-foreground"
+                      )}
+                    >
+                      {detail.error}
+                    </p>
                   )}
-                  {detail.attempt > 1 && (
-                    <span className="text-xs text-muted-foreground">attempt {detail.attempt}</span>
+
+                  {detail.engine_version && (
+                    <p className="mt-2.5 text-[11px] text-muted-foreground/60 font-medium uppercase tracking-wider flex items-center gap-2">
+                      <span className="bg-background border border-border/50 px-1.5 py-0.5 rounded font-mono-data normal-case">
+                        v{detail.engine_version}
+                      </span>
+                      {stage.started_at && <span>• Started {formatDate(stage.started_at)}</span>}
+                    </p>
                   )}
-                  <StatusBadge status={stage.status} />
                 </div>
               </div>
-
-              {detail.error && (
-                <p
-                  className={
-                    stage.status === 'failed'
-                      ? 'mt-1 text-xs text-destructive'
-                      : 'mt-1 text-xs text-muted-foreground'
-                  }
-                >
-                  {detail.error}
-                </p>
-              )}
-
-              {detail.engine_version && (
-                <p className="mt-1 text-xs text-muted-foreground">
-                  <span className="font-mono">
-                    {stage.engine} v{detail.engine_version}
-                  </span>
-                  {stage.started_at && <> · started {formatDate(stage.started_at)}</>}
-                </p>
-              )}
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </CardContent>
     </Card>
   );

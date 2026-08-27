@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
+import { Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useLogin } from '@/lib/hooks/use-auth';
 
@@ -17,15 +18,24 @@ export default function LoginPage() {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Sign in</CardTitle>
+    <Card className="glass-strong border-accent-cyan/20 shadow-2xl shadow-black/50 animate-fade-in relative overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-b from-accent-cyan/5 to-transparent pointer-events-none" />
+      
+      <CardHeader className="text-center pb-8 pt-10">
+        <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-animated shadow-[0_0_30px_hsl(187_92%_57%_/_0.4)]">
+          <Shield className="h-8 w-8 text-white drop-shadow-md" />
+        </div>
+        <CardTitle className="text-2xl font-bold tracking-tight">Welcome back</CardTitle>
+        <CardDescription className="mt-2 text-muted-foreground/80">
+          Sign in to access the command center
+        </CardDescription>
       </CardHeader>
-      <CardContent>
-        <form onSubmit={onSubmit} className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="email" className="text-sm font-medium">
-              Email
+      
+      <CardContent className="px-8 pb-10">
+        <form onSubmit={onSubmit} className="flex flex-col gap-5">
+          <div className="flex flex-col gap-2">
+            <label htmlFor="email" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1">
+              Work Email
             </label>
             <Input
               id="email"
@@ -34,12 +44,20 @@ export default function LoginPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              className="h-12 bg-background/50 border-border/80 focus-visible:bg-background transition-colors"
+              placeholder="analyst@sephela.local"
             />
           </div>
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="password" className="text-sm font-medium">
-              Password
-            </label>
+          
+          <div className="flex flex-col gap-2">
+            <div className="flex justify-between items-center ml-1">
+              <label htmlFor="password" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Password
+              </label>
+              <span className="text-xs font-medium text-accent-cyan hover:text-accent-cyan/80 cursor-pointer transition-colors">
+                Forgot password?
+              </span>
+            </div>
             <Input
               id="password"
               type="password"
@@ -47,15 +65,23 @@ export default function LoginPage() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              className="h-12 bg-background/50 border-border/80 focus-visible:bg-background transition-colors"
+              placeholder="••••••••"
             />
           </div>
+          
           {login.isError && (
-            <p className="text-sm text-destructive">
-              {login.error instanceof Error ? login.error.message : 'Login failed.'}
-            </p>
+            <div className="mt-2 rounded-md bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive-foreground text-center animate-shake">
+              {login.error instanceof Error ? login.error.message : 'Authentication failed. Please verify credentials.'}
+            </div>
           )}
-          <Button type="submit" loading={login.isPending} className="w-full">
-            Sign in
+          
+          <Button 
+            type="submit" 
+            loading={login.isPending} 
+            className="mt-4 w-full h-12 text-base font-bold tracking-wide shadow-[0_0_20px_hsl(187_92%_57%_/_0.3)] hover:shadow-[0_0_30px_hsl(187_92%_57%_/_0.5)] transition-shadow duration-300"
+          >
+            Authenticate
           </Button>
         </form>
       </CardContent>
